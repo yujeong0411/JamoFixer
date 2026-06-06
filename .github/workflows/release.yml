@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyqt6 pyinstaller
+
+      - name: Verify __version__ matches tag
+        shell: pwsh
+        run: |
+          $tagVersion = "${{ github.ref_name }}" -replace '^v', ''
+          $match = Select-String -Path jamo_fixer.py -Pattern '__version__\s*=\s*"([^"]+)"' | Select-Object -First 1
+          if (-not $match) {
+            Write-Error "No __version__ found in jamo_fixer.py"
+            exit 1
+          }
+          $codeVersion = $match.Matches[0].Groups[1].Value
+          if ($codeVersion -ne $tagVersion) {
+            Write-Error "Version mismatch: __version__='$codeVersion' but tag='$tagVersion'"
+            exit 1
+          }
+          Write-Host "OK: version $codeVersion matches tag $tagVersion"
+
+      - name: Build exe
+        run: |
+          pyinstaller --onefile --windowed --name "JamoFixer" `
+            --icon Icon.ico --add-data "Icon.png;." `
+            jamo_fixer.py
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/JamoFixer.exe
+          generate_release_notes: true
+          draft: false
+          prerelease: false
