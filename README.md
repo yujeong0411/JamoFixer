@@ -56,12 +56,15 @@ python jamo_fixer.py
 ```bash
 pip install pyqt6 pyinstaller
 
+python generate_version_info.py
+
 pyinstaller --onefile --windowed --name "JamoFixer" ^
             --icon Icon.ico --add-data "Icon.png;." ^
+            --version-file version_info.txt ^
             jamo_fixer.py
 ```
 
-결과물: `dist/JamoFixer.exe`
+결과물: `dist/JamoFixer.exe`. 파일 우클릭 → 속성 → 자세히 탭에서 `__version__` 값이 파일 버전·제품 버전으로 보입니다.
 
 ### 릴리즈 자동 배포
 
