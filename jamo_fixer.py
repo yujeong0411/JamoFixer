@@ -32,6 +32,16 @@ def resource_path(name: str) -> str:
     return os.path.join(base, name)
 
 
+def separated_display(name: str) -> str:
+    """NFD(분해형) 이름을 화면에서 '합쳐 보이지' 않게 만든다.
+
+    Qt 렌더러는 분해된 한글 자모를 음절로 합쳐서 그리기 때문에 NFD/NFC가
+    똑같아 보인다. 코드포인트 사이에 폭 0 공백(U+200B)을 끼워 넣어 자모가
+    합쳐지지 않고 분리된 깨진 형태 그대로 보이도록 한다. (표시 전용)
+    """
+    return "​".join(name)
+
+
 class UpdateChecker(QThread):
     """GitHub Releases에서 최신 버전을 조회해 더 높은 게 있으면 신호를 보낸다.
     네트워크 오류·레이트 리밋 등은 조용히 무시(앱 동작에 영향 없음).
@@ -373,8 +383,9 @@ class JamoFixer(QMainWindow):
         self.table.setRowCount(len(self.items))
         for r, (full, old, new, kind) in enumerate(self.items):
             self.table.setItem(r, 0, QTableWidgetItem(kind))
-            old_item = QTableWidgetItem(old)
+            old_item = QTableWidgetItem(separated_display(old))
             old_item.setForeground(QColor("#c0392b"))
+            old_item.setToolTip(old)
             self.table.setItem(r, 1, old_item)
             new_item = QTableWidgetItem(new)
             new_item.setForeground(QColor("#2E7D32"))
